@@ -8,6 +8,9 @@ addLineSensor(20, 0, 255, 0, 0); //6 orange sensor1 - red component
 addLineSensor(20, 0, 0, 255, 0); //7 orange sensor2 - non-red component
 addLineSensor(0, 0, 255, 0, 0); //8 orange sensor3 - red component
 addLineSensor(0, 0, 0, 255, 0); //9 orange sensor4 - non-red component
+addLineSensor(20, 0, 0, 0, 255); //10 blue sensor - blue component
+addLineSensor(20, 0, 255, 255, 0); //11 blue sensor - non-blue component
+addLineSensor(28, 0, 1, 1, 1); //12 line sensor - non-blue component
 
 
 setColour("blue");
@@ -23,6 +26,17 @@ function isOrange() {
     var red = readSensor(6);
     var green = readSensor(7); // orange is more red than green
     if (red > 0.4 && green < 0.9 * red) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+function isBlue() {
+    var blue = readSensor(10);
+    var redgreen = readSensor(11);
+    if (blue > 0.4 && redgreen < 0.9 * blue) {
         return true;
     }
     else {
@@ -100,13 +114,80 @@ function survivorExit() {
 			console.log("L is " + readSensor(0))
 			console.log("R is " + readSensor(1))
 			//find direction to go
-			//left outward
-			if (l && !r){
-					
+			
+			if (l && !r) {
+				//left outward
+				console.log("left outward")
+				var leftOut = false
+				while (!leftOut) {
+					var boundaryLow = readSensor(6) > 0.9;
+					var boundaryHigh = readSensor(7) < 0.98;
+					var l = readSensor(0) > 0.5; // left seeing light
+					var r = readSensor(1) > 0.5; // right seeing light	
+
+					if (boundaryLow && boundaryHigh) {
+						forward(1);
+					}
+					else if (isBlue()) {
+						forward(10)
+					}
+					else {
+						if (!l) {
+							left(4);
+						}
+						else if (r) {
+							right(4);
+						}
+
+						else {
+							forward(1)
+						}
+					}
+				}
+			}
+		
+			
+			if (!l && r){
+				//right outward
+				console.log("right outward")
+				var rightOut = false
+				while (!rightOut) {
+					var boundaryLow = readSensor(6) > 0.9;
+					var boundaryHigh = readSensor(7) < 0.98;
+					var l = readSensor(0) > 0.5; // left seeing light
+					var r = readSensor(1) > 0.5; // right seeing light
+					var lineSens = readSensor(12) < 0.4; // seeing dark					
+					console.log(readSensor(12))
+					if (boundaryLow && boundaryHigh) {
+						forward(1);
+					}
+					else if (isBlue()) {
+							forward(10)
+					}
+					else if (lineSens){
+						left(30)
+						forward(30)
+						!lineFound === true
+						!exitFound === true
+						!rightOut === true
+					}
+					else {
+						if (!r) {
+							left(4);
+						}
+						else if (l) {
+							right(4);
+						}
+						else {
+							forward(1)
+						}
+					}
+				}
 			}
 		}
 	}
 }
+
 
 
 function survivorSearch() { //penDown()
