@@ -41,7 +41,7 @@ function isBlue() {
 	//similar function for is orange, and helps the bot avoid if it encounters blue for zone entry and survivor 
     var blue = readSensor(10);
     var redgreen = readSensor(11);
-    if (blue > 0.9 && redgreen < 0.4 * blue) {
+    if (blue > 0.9 && redgreen < 0.4) {
 		return true;
     }
     else {
@@ -210,7 +210,8 @@ function followPath() {
 		var lFar = readSensor(13) < 0.68; // left - further sensors for middle and middleFar sensor comparison
         var rFar = readSensor(14) < 0.68; // right - further sensors for middle and middleFar sensor comparison
 		var middleFwdSens = readSensor(15) > 0.8; //middle sensor looking for gaps
-
+		var penCount = 2 //pencount reset after exiting successfully
+		
 		stop = readSensor(4) > 0.69 && readSensor(5) < 0.12
 		
 		if (readSensor(4) > 0.69 && readSensor(5) < 0.12) {
@@ -251,8 +252,8 @@ function followPath() {
 					survivorSearch();
 					survivorExit();
 				}
-				var penCount = 2
-				//pencount reset after exiting successfully
+				
+				
             }
 			else if (middleFwdSens) {
 				//condition to assist with navigating the segmented semi-circle paths
