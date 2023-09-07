@@ -1,27 +1,58 @@
+//Assignment 3 - Aaron Davey
+
+/* Here is my submission for assignment 3. The first few functions are from the turing tutorials (moving bumper etc)
+My contribution to the code starts at the solveMaze function. There are a few new ones above that I will explain*/
+
+/* solveMaze starts by checking if goalreached is false, running a while loop with the following
+it obtains the current coordinates
+then it marks the current coord as visited in the unvisitedgrid (false)
+after that it sets an initial direction (adding 1 to the X axis to proceed right)
+it firstly checks if the current coord matches the goal
+next it checks if it can move into the targeted (next) coord
+this uses the canMoveForward function which checks the coord against a number of conditions including,
+whether its in the grid boundary
+if that coord has been marked as wall (all are set to 'open' initially)
+and if it is visited
+if false then it goes to check the grid using findNextViableCoordinate
+this looks in a series of directions on the grid then determines an open grid from there
+if the above is not satisfied it then moves into the dead end handling logic,
+first it sets deadEndCoord as the current coord
+it then deletes this from the path set (pathSet determines the pathing for the return and finish)
+it then produces an array from the pathset (pathStackFinal)
+then it extracts the x and y coords needed and passes it to the nextX and nextY to move bumper out of the dead end
+and continue on its journey
+if goal reached is checked next, and this just checks if the deadEndCoord is still present within the array before it moves onto the final functions
+after this, the next check is it the targeted next coord is indeed 'open', pushes the current coords into the pathset and
+then performs a moveTo into the determined coord
+after this solve maze updates the lastvisitedcoord with current
+
+other functions are explained below*/
+
 const numRows = 10;
 const numCols = 10;
 var collisionFlag = false;
 let goalReached = false;
 let homeReached = false;
-let goal = { x: 5, y: 5 }; // Use an object to represent the goal
+let mazeSolved = false;
+let goal = { x: 5, y: 5 };
 
 let currentX = 0;
 let currentY = 0;
-let directionX = 1; // Initial direction along the X-axis
-let directionY = 0; // Initial direction along the Y-axis
+let directionX = 1;
+let directionY = 0;
 
 grid = [];
-unvisitedGrid = []; // Added array to keep track of unvisited coordinates
+unvisitedGrid = [];
 let pathStackFinal = [];
 var pathSet = new Set();
 reversePathStack = [];
 
 for (let y = 0; y < 10; y++) {
   let row = [];
-  let unvisitedRow = []; // Initialize the unvisited grid
+  let unvisitedRow = [];
   for (let x = 0; x < 10; x++) {
-    row[x] = "open"; // Use "open" for open coordinates
-    unvisitedRow[x] = true; // Initialize the unvisited grid as true
+    row[x] = "open";
+    unvisitedRow[x] = true;
   }
   grid[y] = row;
   unvisitedGrid[y] = unvisitedRow;
@@ -98,8 +129,9 @@ function forward(distance) {
       (Math.abs(velocity) > 0.1 && !isCollisionDetected()))
   );
   if (isCollisionDetected()) {
+    //additional logic added here to catch a collision detection and interrupt the moveTo process
     backOff();
-    // console.log("Collided with a wall");
+
     collisionFlag = true;
   }
   setLeftPower(0);
@@ -109,16 +141,16 @@ function forward(distance) {
 function moveTo(xTile, yTile) {
   collisionFlag = false;
   face(xTile, yTile);
-  //   console.log(xTile + " " + yTile);
+
   let dx = pixelLocation(xTile) - getX();
   let dy = pixelLocation(yTile) - getY();
   let distance = magnitude(dx, dy);
 
   forward(distance);
   if (collisionFlag) {
-    // console.log("Flag is " + collisionFlag);
-    grid[xTile][yTile] = "wall"; // Mark the coordinate as a wall
-    //console.table(grid);
+    //additional logic added here to catch a collision detection and interrupt the moveTo process
+    grid[xTile][yTile] = "wall";
+
     collisionFlag = false;
   }
 }
@@ -140,27 +172,26 @@ function backOff(_xTile, _yTile) {
 }
 
 function canMoveForward(x, y) {
-  // Calculate the next grid coordinate without modifying the current position
-  let nextX = x + directionX;
+  let nextX = x + directionX; //looks at the targeted coord first then measures it against a set of conditions
   let nextY = y + directionY;
 
-  // Check if the next square is within bounds and not marked as a wall
   if (
-    nextX >= 0 &&
-    nextX < numCols &&
-    nextY >= 0 &&
-    nextY < numRows &&
-    grid[nextX][nextY] !== "wall" && // Use "wall" for blocked coordinates
-    unvisitedGrid[nextX][nextY] // Check if the coordinate is unvisited
+    nextX >= 0 && //boundary
+    nextX < numCols && //boundary
+    nextY >= 0 && //boundary
+    nextY < numRows && //boundary
+    grid[nextX][nextY] !== "wall" && //wall
+    unvisitedGrid[nextX][nextY] //unvisited false
   ) {
-    return true; // The robot can move forward
+    return true; //passes the coord onto MoveTo later
   } else {
-    return false; // The robot cannot move forward
+    return false;
   }
 }
 
 function findNextViableCoordinate(x, y) {
   const directions = [
+    //looks at the grid  for neighbouring coords that do not match the below conditions
     { dx: 1, dy: 0 }, // Right
     { dx: 0, dy: 1 }, // Down
     { dx: 0, dy: -1 }, // Up
@@ -171,54 +202,48 @@ function findNextViableCoordinate(x, y) {
     const nextX = x + dir.dx;
     const nextY = y + dir.dy;
     if (
-      nextX >= 0 &&
-      nextX < numCols &&
-      nextY >= 0 &&
-      nextY < numRows &&
-      grid[nextX][nextY] !== "wall" &&
-      unvisitedGrid[nextX][nextY]
+      nextX >= 0 && //boundary
+      nextX < numCols && //boundary
+      nextY >= 0 && //boundary
+      nextY < numRows && //boundary
+      grid[nextX][nextY] !== "wall" && //wall
+      unvisitedGrid[nextX][nextY] //unvisited false
     ) {
-      return { x: nextX, y: nextY };
+      return { x: nextX, y: nextY }; //passes the coord onto MoveTo later
     }
   }
 
-  return null; // No viable coordinate found in any direction
+  return null;
 }
 
 function solveMaze() {
   setLightColour("blue");
-  // Initialize variables
+
   pathSet = new Set();
-  //pathStackFinal = Array.from(pathSet);
+
   var deadEndCoord = null;
   while (!goalReached) {
-    // Mark the current square as visited
-    currentX = Math.floor(getX() / 64); // Convert to grid coordinates
-    currentY = Math.floor(getY() / 64); // Convert to grid coordinates
-    unvisitedGrid[currentX][currentY] = false; // Mark the coordinate as visited
+    currentX = Math.floor(getX() / 64);
+    currentY = Math.floor(getY() / 64);
+    unvisitedGrid[currentX][currentY] = false;
 
-    // Calculate the next grid coordinate
     let nextX = currentX + directionX;
     let nextY = currentY + directionY;
 
     if (currentX === goal.x && currentY === goal.y) {
-      // Goal reached, set goalReached to true and exit the loop
       goalReached = true;
     }
 
-    // Check if we can move to the next coordinate, or find the next viable coordinate
     if (!canMoveForward(currentX, currentY, directionX, directionY)) {
       const nextCoord = findNextViableCoordinate(currentX, currentY);
       if (nextCoord) {
         nextX = nextCoord.x;
         nextY = nextCoord.y;
       } else if (pathSet.size > 0) {
-        // Dead end reached, backtrack to the last visited coordinate
         deadEndCoord = `${currentX},${currentY}`;
-        println(pathSet.has(deadEndCoord));
+
         pathSet.delete(deadEndCoord);
-        println(pathSet.has(deadEndCoord));
-        //const deadEndCoord = pathStackFinal.pop();
+
         pathStackFinal = Array.from(pathSet);
         const secondLastCoordinate = pathStackFinal[pathStackFinal.length - 1];
 
@@ -228,65 +253,78 @@ function solveMaze() {
         nextX = secondlastCoordX;
         nextY = secondlastCoordY;
       } else {
-        // No viable coordinate found, backtrack to the last visited coordinate
         nextX = lastVisitedCoordinate.x;
         nextY = lastVisitedCoordinate.y;
       }
     }
 
-    // Add the current coordinate to the Set (this will automatically remove duplicates)
-
     if (goalReached) {
       pathStackFinal = Array.from(pathSet);
       for (i = 0; i < pathStackFinal.length; i++) {
-        //println(pathStackFinal[i]);
         if (pathStackFinal[i] === deadEndCoord) {
-          //println("Removing deadEndCoord from pathStackFinal");
           pathStackFinal.splice(i, 1);
         }
       }
-      //println("Path Set");
-      //println(pathStackFinal);
     }
 
-    // Check if the next coordinate is open before moving
     if (grid[nextX][nextY] === "open") {
-      // Move to the next coordinate
       pathSet.add(`${currentX},${currentY}`);
-      //pathStackFinal = Array.from(pathSet);
+
       moveTo(nextX, nextY);
     }
 
-    // Update the last visited coordinate
     lastVisitedCoordinate = { x: currentX, y: currentY };
   }
-  //pathStackFinal = Array.from(pathSet);
-  // After the loop, remove deadEndCoord from pathStackFinal if goalReached
 }
 
 function goHome() {
+  //function to return home after solving the maze, this takes the 'pathStackFinal' and reverses it, then performs a for loop running through the pathStackFinal moveset
   setLightColour("red");
   reversePathStack = pathStackFinal.reverse();
   while (!homeReached) {
-    currentX = Math.floor(getX() / 64); // Convert to grid coordinates
-    currentY = Math.floor(getY() / 64); // Convert to grid coordinates
+    currentX = Math.floor(getX() / 64);
+    currentY = Math.floor(getY() / 64);
     if (currentX === 0 && currentY === 0) {
-      // Goal reached, set goalReached to true and exit the loop
       homeReached = true;
       break;
     }
 
-    //console.table(reversePathStack);
     for (i = 0; i < reversePathStack.length; i++) {
       var homeCoordX = reversePathStack[i].substr(0, 1);
       var homeCoordY = reversePathStack[i].substr(2);
       let home = { x: homeCoordX, y: homeCoordY };
-      println(home.x + " " + home.y);
       moveTo(home.x, home.y);
     }
   }
 }
+//unfortunately for maze runner I was not able to create an optimised path that would remove all unnecessary waypoints for a speedy solve
+//this was a problem due to the webworker seeminly appending async to all of the functions in the environment
+//despite many attempts to use await and similar methods I was unable to get the program to wait for the stack to fully populate to perform the optimisation
+// in time for the goHome and mazeRunner functions to use the newly optimised path
+//however, console.table would print an optimised path afterwards, so this was disappointing. any feedback on how I could achieve it in this environment would be helpful!
+function mazeRunner() {
+  // similar function to return home after solving the maze, this takes the 'pathStackFinal' and reverses it again, then performs a for loop running through the pathStackFinal moveset
+  setLightColour("green");
+  runnerPath = pathStackFinal.reverse(); //has to be reversed as doing this seems to alter pathStackFinal rather than just for the above instance
+  runnerPath.push("5,5");
+  while (!mazeSolved) {
+    currentX = Math.floor(getX() / 64);
+    currentY = Math.floor(getY() / 64);
+    if (currentX === 5 && currentY === 5) {
+      mazeSolved = true;
+      break;
+    }
 
-// Start solving the maze
+    for (i = 0; i < runnerPath.length; i++) {
+      var solveCoordX = runnerPath[i].substr(0, 1);
+      var solveCoordY = runnerPath[i].substr(2);
+      let solve = { x: solveCoordX, y: solveCoordY };
+      moveTo(solve.x, solve.y);
+    }
+  }
+}
+
 solveMaze();
+console.table(pathStackFinal);
 goHome();
+mazeRunner();
